@@ -6,6 +6,7 @@
 #include <PNGViewer.h>
 #include <lodepng.h>
 #include <iostream>
+#include <algorithm>
 
 
 template<typename T>
@@ -25,7 +26,7 @@ public:
 
 	//Constructor from file
 	Image<T>(std::string filePath) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
-		
+
 		unsigned char * dataPtr;
 
 		/*load the PNG in one function call*/
@@ -60,7 +61,7 @@ public:
 	Image& operator= (const Image& other) {
 		Image tmp(other);
 		*this = std::move(tmp);
-		return *this; 
+		return *this;
 	}
 
 	//Destructor
@@ -68,6 +69,12 @@ public:
 		std::cout << "Image destructor running" << std::endl;
 
 	}
+
+	//Clone
+	Image clone() {
+		return Image(*this);
+	}
+
 
 	//Dimensions accessor
 	unsigned int getWidth() const {
@@ -87,11 +94,11 @@ public:
 	}
 
 	//Open a window and show the result. Wait for keypress until returning.
-	void show() {
-		std::vector<unsigned char> d = getCharData();
+	void show(bool dynamicScale = false) {
+		std::vector<unsigned char> d = getCharData(dynamicScale);
 		viewer->setData(d.data(), width, height);
 		viewer->showWaitForEsc();
-		
+
 	}
 
 	T & at(unsigned int i) {
@@ -107,14 +114,24 @@ public:
 	}
 
 	void transpose() {
-		std::vector<T> ping = std::vector<T>(data.size(),0);
+		std::vector<T> ping = std::vector<T>(data.size(), 0);
 		recursiveTranspose(data.data(), ping.data(), width, height, width, height);
 		std::swap(data, ping);
 	}
 
 private:
-	std::vector<unsigned char> getCharData() {
-		return std::vector<unsigned char>(data.begin(), data.end());
+	std::vector<unsigned char> getCharData(bool dynamicScale) {
+		if (dynamicScale) {
+			auto it = std::max_element(data.begin(), data.end());
+			T val = *it/255;
+			std::vector<unsigned char> res;
+			std::transform(data.begin(), data.end(), std::back_inserter(res), [&val](T a) {return (unsigned char)(a / val); });
+			return res;
+		}
+		else {
+
+			return std::vector<unsigned char>(data.begin(), data.end());
+		}
 	}
 
 	std::vector<T> data = std::vector<T>(); //The image data itself.

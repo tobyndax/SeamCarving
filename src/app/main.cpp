@@ -1,7 +1,7 @@
 #include <string>
 #include <ImageContainer.h>
 #include <SobelMagnitude.h>
-
+#include <SeamCostCalculator.h>
 
 #ifdef __APPLE__
 std::string pngPath = "../testdata/lenaGrayLarge.png";
@@ -19,7 +19,12 @@ int main(int argc, char * argv[])
 		filter.execute();
 		output = filter.getResult();
 	}
-
 	output->show();
+	{
+		SeamCostCalculator costCalculator(output);
+		costCalculator.execute();
+		costCalculator.showCost();
+	}
+	
 	return 0;
 }
