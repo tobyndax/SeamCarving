@@ -1,5 +1,5 @@
-#GPUImageProcessing
-#GPU accelerated Image Processing Library
+#SeamCarving
+#Project for testing the SeamCarving method
 
 The project is licensed under the MIT license.
 
@@ -10,7 +10,7 @@ Copyright (c) 2005-2016 Lode Vandevenne
 
 Many thanks for an excellent piece of software
 
-SDL2, this is used for viewing results.
+It also uses SDL2, this is used for viewing results.
 
 #Build instructions
 ##Mac OS X
@@ -21,8 +21,3 @@ Run cmake in the src directory on CMakeLists.txt or cmake -D CMAKE_BUILD_TYPE=Re
 ##Windows Visual Studio 2017
 Right click the GPUImageProcessing folder, select open folder (VS).
 The project should configure itself, select the startup app and build.
-
-SDL dll's are included in the repo for Windows.
-
-Requires that OpenCL Dev SDK is installed. See your manufacturer of CPU/GPU for downloads. 
-After installation a reboot is likely required if using the cmake to configure the project.
