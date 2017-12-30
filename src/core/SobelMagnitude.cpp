@@ -22,7 +22,10 @@ SobelMagnitudeFilter::SobelMagnitudeFilter(std::shared_ptr<Image<unsigned char>>
 
 SobelMagnitudeFilter::~SobelMagnitudeFilter()
 {
+#if _DEBUG
 	std::cout << "Filter destructor running" << std::endl;
+#endif // DEBUG
+
 }
 
 void SobelMagnitudeFilter::execute()

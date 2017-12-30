@@ -8,14 +8,13 @@
 #include <iostream>
 #include <algorithm>
 
-
 template<typename T>
 class EXPORT_SYMBOL Image {
 
 public:
 
 	//Default Image Constructor
-	Image<T>()  {
+	Image<T>() {
 		width = 0;
 		height = 0;
 		data = std::vector<T>();
@@ -71,14 +70,15 @@ public:
 
 	//Destructor
 	~Image() {
+#if _DEBUG
 		std::cout << "Image destructor running: " << name << std::endl;
+#endif
 	}
 
 	//Clone
 	Image clone() {
 		return Image(*this);
 	}
-
 
 	//Dimensions accessor
 	unsigned int getWidth() const {
@@ -119,27 +119,23 @@ public:
 		return data.at(i);
 	}
 
-	std::vector<T> & getData() {
-		return data;
-	}
-
 	void transpose() {
 		std::vector<T> ping = std::vector<T>(data.size(), 0);
 		recursiveTranspose(data.data(), ping.data(), width, height, width, height);
 		std::swap(data, ping);
 	}
 
-	void setName(const std::string& aName) { name = aName;  };
+	void setName(const std::string& aName) { name = aName; };
 
 private:
 	std::vector<unsigned char> getCharData(const bool dynamicScale) {
 		if (dynamicScale) {
 			auto it = std::max_element(data.begin(), data.end());
-			T val = *it/254; //When max value is 255 we get some pixels completely black, not sure why, leave for future investigation.
-		
+			T val = *it / 254; //When max value is 255 we get some pixels completely black, not sure why, leave for future investigation.
+
 			std::vector<unsigned char> res;
 			std::transform(data.begin(), data.end(), std::back_inserter(res), [&val](T a) {return (unsigned char)(a / val); });
-			
+
 			return res;
 		}
 		else {
@@ -148,11 +144,11 @@ private:
 		}
 	}
 
-	
-
 	void baseTranspose(T* __restrict a, T * __restrict b, const int width, const int height, const int strideA, const int strideB)
 	{
+		//__assume(height <= TRANSPOSE_BLOCK_SIZE);
 		for (int j = 0; j < height; ++j) {
+			//__assume(width <= TRANSPOSE_BLOCK_SIZE);
 			for (int i = 0; i < width; ++i) {
 				int index = i + j * strideA;
 				int indexT = j + i * strideB;
