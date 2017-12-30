@@ -5,10 +5,11 @@
 SobelMagnitudeFilter::SobelMagnitudeFilter(const Image<unsigned char> & im)
 {
 	image = std::make_shared<const Image<unsigned char>>(im);
-	gx = std::move(std::make_unique<Image<int>>(Image<int>(image->getWidth(), image->getHeight())));
-	gy = std::move(std::make_unique<Image<int>>(Image<int>(image->getWidth(), image->getHeight())));
-	ping = std::move(std::make_unique<Image<int>>(Image<int>(image->getWidth(), image->getHeight())));
-	output = std::make_shared<Image<unsigned char>>(Image<unsigned char>(image->getWidth(), image->getHeight()));
+	gx->resize(image->getWidth(), image->getHeight());
+	gy->resize(image->getWidth(), image->getHeight());
+	ping->resize(image->getWidth(), image->getHeight());
+	output->resize(image->getWidth(), image->getHeight());
+
 }
 
 SobelMagnitudeFilter::~SobelMagnitudeFilter()
@@ -115,16 +116,12 @@ void SobelMagnitudeFilter::performGy()
 
 		}
 	}
-
-	
-	
-
 }
 
 void SobelMagnitudeFilter::combineGxGy()
 {
 	//std::transform(gy->begin(), gy->end(), gx->begin(), output->begin(), [](int a, int b) {int res = sqrt(a*a + b * b); return res < 0 ? 0 : (unsigned char)res; });
-	std::transform(gy->begin(), gy->end(), gx->begin(), output->begin(), [](int a, int b) {int res = std::sqrt(b*b); return res < 0 ? 0 : (unsigned char)res; });
+	std::transform(gy->begin(), gy->end(), gx->begin(), output->begin(), [](int a, int b) {int res = std::sqrt(a*a + b*b); return res < 0 ? 0 : (unsigned char)res; });
 	output->transpose();
 }
 

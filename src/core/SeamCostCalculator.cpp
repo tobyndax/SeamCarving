@@ -6,8 +6,8 @@
 SeamCostCalculator::SeamCostCalculator(const std::shared_ptr<Image<unsigned char>>& im)
 {
 	//Make empty cost / path variable of appropriate size
-	cost = std::make_unique<Image<int>>(Image<int>(im->getWidth(), im->getHeight()));
-	path = std::make_unique<Image<int>>(Image<int>(im->getWidth(), im->getHeight()));
+	cost->resize(im->getWidth(), im->getHeight());
+	path->resize(im->getWidth(), im->getHeight());
 
 	//Copy the image (does this copy?)
 	image = std::make_shared<Image<unsigned char>>(im->clone());

@@ -17,15 +17,22 @@ public:
 	//	
 	//}
 
+	//Default Image Constructor
+	Image<T>()  {
+		width = 0;
+		height = 0;
+		data = std::vector<T>();
+	}
+
 	//Empty Image Constructor
-	Image<T>(unsigned int aWidth, unsigned aHeight) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
+	Image<T>(unsigned int aWidth, unsigned aHeight) {
 		width = aWidth;
 		height = aHeight;
 		data = std::vector<T>(width*height, 0);
 	}
 
 	//Constructor from file
-	Image<T>(std::string filePath) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
+	Image<T>(std::string filePath) {
 
 		unsigned char * dataPtr;
 
@@ -36,23 +43,22 @@ public:
 		{
 			printf("decoder error %u: %s\n", error, lodepng_error_text(error));
 		}
-		unsigned char * newData = new unsigned char[width*height];
+		data = std::vector<T>(width*height);
 		for (int i = 0; i < width*height; ++i) {
-			newData[i] = dataPtr[i * 4 + 0];
+			data[i] = dataPtr[i * 4 + 0];
 		}
-
-		data = std::vector<T>(newData, newData + width * height);
+		delete dataPtr;
 	}
 
 	//Copy constructor
-	Image<T>(const Image & other) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
+	Image<T>(const Image & other) {
 		this->width = other.width;
 		this->height = other.height;
 		data = other.data;
 	}
 
 	//Move constructor
-	Image<T>(Image && other) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
+	Image<T>(Image && other) {
 		this->width = other.width;
 		this->height = other.height;
 		data = other.data;
@@ -67,7 +73,6 @@ public:
 	//Destructor
 	~Image() {
 		std::cout << "Image destructor running" << std::endl;
-
 	}
 
 	//Clone
@@ -93,12 +98,18 @@ public:
 		return data.end();
 	}
 
+	void resize(unsigned int aWidth, unsigned int aHeight) {
+		width = aWidth;
+		height = aHeight;
+		data.resize(aWidth*aHeight);
+	}
+
 	//Open a window and show the result. Wait for keypress until returning.
 	void show(bool dynamicScale = false) {
+		PNGViewer viewer{ };
 		std::vector<unsigned char> d = getCharData(dynamicScale);
-		viewer->setData(d.data(), width, height);
-		viewer->showWaitForEsc();
-
+		viewer.setData(d.data(), width, height);
+		viewer.showWaitForEsc();
 	}
 
 	T & at(unsigned int i) {
@@ -123,7 +134,7 @@ private:
 	std::vector<unsigned char> getCharData(bool dynamicScale) {
 		if (dynamicScale) {
 			auto it = std::max_element(data.begin(), data.end());
-			T val = *it/255;
+			T val = *it/256;
 			std::vector<unsigned char> res;
 			std::transform(data.begin(), data.end(), std::back_inserter(res), [&val](T a) {return (unsigned char)(a / val); });
 			return res;
@@ -137,8 +148,6 @@ private:
 	std::vector<T> data = std::vector<T>(); //The image data itself.
 	unsigned int width = 0;
 	unsigned int height = 0;
-
-	std::unique_ptr<PNGViewer> viewer;
 
 	void baseTranspose(T* __restrict a, T * __restrict b, const int width, const int height, const int strideA, const int strideB)
 	{

@@ -17,11 +17,11 @@ private:
 	void performGy();
 	void combineGxGy();
 
-	std::unique_ptr<Image<int>> gx = nullptr; //Shared_ptr output, 
-	std::unique_ptr<Image<int>> gy = nullptr; //Shared_ptr output, 
-	std::unique_ptr<Image<int>> ping = nullptr; //Ping buffer 
+	std::unique_ptr<Image<int>> gx = std::make_unique<Image<int>>(); // 
+	std::unique_ptr<Image<int>> gy = std::make_unique<Image<int>>(); //
+	std::unique_ptr<Image<int>> ping = std::make_unique<Image<int>>(); //Ping buffer 
 
 
 	std::shared_ptr<const Image<unsigned char>> image = nullptr; //The filter shouldn't hold memory access of the input image,
-	std::shared_ptr<Image<unsigned char>> output = nullptr; //Shared_ptr output, 
+	std::shared_ptr<Image<unsigned char>> output = std::make_shared<Image<unsigned char>>(); //Shared_ptr output, 
 };

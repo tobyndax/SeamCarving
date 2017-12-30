@@ -19,6 +19,6 @@ private:
 	void calculateCost();
 
 	std::shared_ptr<Image<unsigned char>> image;
-	std::unique_ptr<Image<int>> cost;
-	std::unique_ptr<Image<int>> path;
+	std::unique_ptr<Image<int>> cost = std::make_unique<Image<int>>();
+	std::unique_ptr<Image<int>> path = std::make_unique<Image<int>>();
 };

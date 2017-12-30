@@ -13,18 +13,18 @@ int main(int argc, char * argv[])
 {
 	Image<unsigned char> img(pngPath);
 	std::shared_ptr<Image<unsigned char>> output;
-	
+
 	{	// Scope to trigger destructor.
 		SobelMagnitudeFilter filter(img);
 		filter.execute();
 		output = filter.getResult();
+		output->show();
 	}
-	output->show();
+
 	{
 		SeamCostCalculator costCalculator(output);
 		costCalculator.execute();
 		costCalculator.showCost();
 	}
-	
 	return 0;
 }
