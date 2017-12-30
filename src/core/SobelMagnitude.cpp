@@ -2,15 +2,23 @@
 #include <algorithm>
 #include <iostream>
 
-SobelMagnitudeFilter::SobelMagnitudeFilter(const Image<unsigned char> & im)
+SobelMagnitudeFilter::SobelMagnitudeFilter(std::shared_ptr<Image<unsigned char>> im)
 {
-	image = std::make_shared<const Image<unsigned char>>(im);
+	image = im;
+
 	gx->resize(image->getWidth(), image->getHeight());
 	gy->resize(image->getWidth(), image->getHeight());
+	
+	gx->setName("gx");
+	gy->setName("gy");
+	
 	ping->resize(image->getWidth(), image->getHeight());
-	output->resize(image->getWidth(), image->getHeight());
+	ping->setName("ping");
 
+	output->resize(image->getWidth(), image->getHeight());
+	output->setName("output");
 }
+
 
 SobelMagnitudeFilter::~SobelMagnitudeFilter()
 {

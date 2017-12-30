@@ -11,20 +11,28 @@ std::string pngPath = "..\\..\\testdata\\lenaGrayLarge.png";
 
 int main(int argc, char * argv[])
 {
-	Image<unsigned char> img(pngPath);
-	std::shared_ptr<Image<unsigned char>> output;
-
-	{	// Scope to trigger destructor.
-		SobelMagnitudeFilter filter(img);
-		filter.execute();
-		output = filter.getResult();
-		output->show();
-	}
-
 	{
-		SeamCostCalculator costCalculator(output);
-		costCalculator.execute();
-		costCalculator.showCost();
+		std::shared_ptr<Image<unsigned char>> img = std::make_shared<Image<unsigned char>>(pngPath);
+		img->setName("img");
+		std::shared_ptr<Image<unsigned char>> output;
+
+		{	// Scope to trigger destructor.
+			SobelMagnitudeFilter filter(img);
+			filter.execute();
+			output = filter.getResult();
+			output->show();
+		}
+
+		{
+			SeamCostCalculator costCalculator(output);
+			costCalculator.execute();
+			costCalculator.showCost();
+		}
+
+		{
+			//Sanity check that img is untouched 
+			img->show();
+		}
 	}
 	return 0;
 }

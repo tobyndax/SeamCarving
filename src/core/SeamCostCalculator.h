@@ -3,7 +3,7 @@
 
 class SeamCostCalculator {
 public:
-	SeamCostCalculator(const std::shared_ptr<Image<unsigned char>>& im); // constructor
+	SeamCostCalculator(std::shared_ptr<Image<unsigned char>> im); // constructor
 	~SeamCostCalculator() {}; // destructor
 	
 	void execute();

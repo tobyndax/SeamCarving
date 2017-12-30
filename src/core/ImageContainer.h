@@ -11,11 +11,8 @@
 
 template<typename T>
 class EXPORT_SYMBOL Image {
+
 public:
-	////Constructor from dataptr
-	//Image(unsigned char * aData, unsigned int aWidth, unsigned int aHeight) : width(aWidth), height(aHeight), data{std::make_shared<std::vector<unsigned char>>(aData,aWidth*aHeight) } {
-	//	
-	//}
 
 	//Default Image Constructor
 	Image<T>()  {
@@ -54,6 +51,7 @@ public:
 	Image<T>(const Image & other) {
 		this->width = other.width;
 		this->height = other.height;
+		this->name = other.name;
 		data = other.data;
 	}
 
@@ -61,6 +59,7 @@ public:
 	Image<T>(Image && other) {
 		this->width = other.width;
 		this->height = other.height;
+		this->name = other.name;
 		data = other.data;
 	}
 	//Copy assignment operator
@@ -72,7 +71,7 @@ public:
 
 	//Destructor
 	~Image() {
-		std::cout << "Image destructor running" << std::endl;
+		std::cout << "Image destructor running: " << name << std::endl;
 	}
 
 	//Clone
@@ -130,13 +129,17 @@ public:
 		std::swap(data, ping);
 	}
 
+	void setName(const std::string& aName) { name = aName;  };
+
 private:
-	std::vector<unsigned char> getCharData(bool dynamicScale) {
+	std::vector<unsigned char> getCharData(const bool dynamicScale) {
 		if (dynamicScale) {
 			auto it = std::max_element(data.begin(), data.end());
-			T val = *it/256;
+			T val = *it/254; //When max value is 255 we get some pixels completely black, not sure why, leave for future investigation.
+		
 			std::vector<unsigned char> res;
 			std::transform(data.begin(), data.end(), std::back_inserter(res), [&val](T a) {return (unsigned char)(a / val); });
+			
 			return res;
 		}
 		else {
@@ -145,9 +148,7 @@ private:
 		}
 	}
 
-	std::vector<T> data = std::vector<T>(); //The image data itself.
-	unsigned int width = 0;
-	unsigned int height = 0;
+	
 
 	void baseTranspose(T* __restrict a, T * __restrict b, const int width, const int height, const int strideA, const int strideB)
 	{
@@ -194,6 +195,14 @@ private:
 			}
 		}
 	}
+
+	//Data members
+
+	std::vector<T> data = std::vector<T>(); //The image data itself.
+	unsigned int width = 0;
+	unsigned int height = 0;
+	std::string name = "";
+
 };
 
 template class Image<int>;

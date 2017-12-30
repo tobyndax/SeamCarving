@@ -133,11 +133,11 @@ void PNGViewer::generateTexture() {
 			b = image[4 * y * w + 4 * x + 2]; /*blue*/
 			a = image[4 * y * w + 4 * x + 3]; /*alpha*/
 
-											  /*make translucency visible by placing checkerboard pattern behind image*/
-			checkerColor = 191 + 64 * (((x / 16) % 2) == ((y / 16) % 2));
-			r = (a * r + (255 - a) * checkerColor) / 255;
-			g = (a * g + (255 - a) * checkerColor) / 255;
-			b = (a * b + (255 - a) * checkerColor) / 255;
+			//								  /*make translucency visible by placing checkerboard pattern behind image*/
+			//checkerColor = 191 + 64 * (((x / 16) % 2) == ((y / 16) % 2));
+			//r = (a * r + (255 - a) * checkerColor) / 255;
+			//g = (a * g + (255 - a) * checkerColor) / 255;
+			//b = (a * b + (255 - a) * checkerColor) / 255;
 
 			/*give the color value to the pixel of the screenbuffer*/
 			bufp = (Uint32 *)png_surface->pixels + (y * png_surface->pitch / 4) / jump + (x / jump);

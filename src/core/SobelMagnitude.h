@@ -6,7 +6,7 @@
 
 class SobelMagnitudeFilter {
 public:
-	SobelMagnitudeFilter(const Image<unsigned char>& im);
+	SobelMagnitudeFilter(std::shared_ptr<Image<unsigned char>> im);
 	~SobelMagnitudeFilter(); 
 	void execute();
 	std::shared_ptr<Image<unsigned char>> getResult() const;

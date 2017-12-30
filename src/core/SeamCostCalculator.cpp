@@ -3,14 +3,19 @@
 #include <array>
 #include <limits>
 
-SeamCostCalculator::SeamCostCalculator(const std::shared_ptr<Image<unsigned char>>& im)
+SeamCostCalculator::SeamCostCalculator(std::shared_ptr<Image<unsigned char>> im)
 {
 	//Make empty cost / path variable of appropriate size
 	cost->resize(im->getWidth(), im->getHeight());
 	path->resize(im->getWidth(), im->getHeight());
 
+	//Name the images
+	cost->setName("cost");
+	path->setName("path");
+
 	//Copy the image (does this copy?)
-	image = std::make_shared<Image<unsigned char>>(im->clone());
+	image = std::make_shared<Image<unsigned char>>(*im);
+	image->setName("image in SeamCost");
 }
 
 void SeamCostCalculator::execute()
