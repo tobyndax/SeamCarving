@@ -68,6 +68,10 @@ public:
 		return *this;
 	}
 
+	void removePixel(unsigned int i) {
+		data.erase(data.begin()+i);
+	}
+
 	//Destructor
 	~Image() {
 #if _DEBUG
@@ -103,12 +107,22 @@ public:
 		data.resize(aWidth*aHeight);
 	}
 
+	void setSize(unsigned int aWidth, unsigned int aHeight) {
+		width = aWidth;
+		height = aHeight;
+	}
+
 	//Open a window and show the result. Wait for keypress until returning.
 	void show(bool dynamicScale = false) {
-		PNGViewer viewer{ };
 		std::vector<unsigned char> d = getCharData(dynamicScale);
 		viewer.setData(d.data(), width, height);
 		viewer.showWaitForEsc();
+	}
+	//Open a window and show the result. Wait for keypress until returning.
+	void showNow(bool dynamicScale = false) {
+		std::vector<unsigned char> d = getCharData(dynamicScale);
+		viewer.setData(d.data(), width, height);
+		viewer.show();
 	}
 
 	T & at(unsigned int i) {
@@ -128,6 +142,8 @@ public:
 	void setName(const std::string& aName) { name = aName; };
 
 private:
+	PNGViewer viewer{};
+
 	std::vector<unsigned char> getCharData(const bool dynamicScale) {
 		if (dynamicScale) {
 			auto it = std::max_element(data.begin(), data.end());
