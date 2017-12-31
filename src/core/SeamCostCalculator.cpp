@@ -46,7 +46,7 @@ void SeamCostCalculator::calculateCost()
 
 			}
 			//special case 2 
-			else if (i == image->getWidth() - 1) {
+			else if (i == image->getWidth() - 2) {
 				candidates[0] = cost->at(srcIndex - 1);
 				candidates[1] = cost->at(srcIndex);
 				candidates[2] = std::numeric_limits<int>::max();

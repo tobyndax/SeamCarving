@@ -4,17 +4,18 @@
 class SeamCostCalculator {
 public:
 	SeamCostCalculator(std::shared_ptr<Image<unsigned char>> im); // constructor
-	~SeamCostCalculator() {}; // destructor
+	//Use default destructor
+
 	
 	void execute();
 	
 	void showCost() {
 		cost->show(true);
 	}
-	std::shared_ptr<Image<unsigned char>> getResult() {
-		return image;
-	}
-	
+
+	std::unique_ptr<Image<int>> getCost() { return std::move(cost); }
+	std::unique_ptr<Image<int>> getPath() { return std::move(path); }
+
 private:
 	void calculateCost();
 
