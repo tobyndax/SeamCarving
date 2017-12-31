@@ -17,8 +17,8 @@ private:
 	void performGy();
 	void combineGxGy();
 
-	std::unique_ptr<Image<int>> gx = std::make_unique<Image<int>>(); // 
-	std::unique_ptr<Image<int>> gy = std::make_unique<Image<int>>(); //
+	std::unique_ptr<Image<int>> gx = std::make_unique<Image<int>>(); 
+	std::unique_ptr<Image<int>> gy = std::make_unique<Image<int>>();
 	std::unique_ptr<Image<int>> ping = std::make_unique<Image<int>>(); //Ping buffer 
 
 
