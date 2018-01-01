@@ -2,14 +2,8 @@
 #include <chrono>
 #include <iostream>
 #include <numeric>
-PerfUtility::PerfUtility()
-{
 
-}
-PerfUtility::~PerfUtility()
-{
-
-}
+#define _SUPPRESS_COUT_PERF
 
 void PerfUtility::printTimeSumBetween(int startInd, int endInd)
 {
@@ -40,9 +34,11 @@ void PerfUtility::measureFunction(std::function<void (void)> func, std::string f
 	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 	durations.push_back(duration);
 
+#ifndef _SUPPRESS_COUT_PERF
 	std::cout << "Execution of function " + functionName + " took: ";
 
 	std::cout << duration / 1000.0f << "ms" << std::endl;
+#endif
 }
 
 void PerfUtility::reset() {
