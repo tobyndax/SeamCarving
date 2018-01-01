@@ -7,6 +7,8 @@
 #include <lodepng.h>
 #include <iostream>
 #include <algorithm>
+#include <functional>
+#include <PerfUtility.h>
 
 template<typename T>
 class EXPORT_SYMBOL Image {
@@ -69,7 +71,25 @@ public:
 	}
 
 	void removePixel(unsigned int i) {
-		data.erase(data.begin()+i);
+		data.erase(data.begin() + i);
+	}
+	void removePixels(std::vector<int> elements) {
+		//Sort the elements so that the smallest index is at the back of the vector 
+		std::sort(elements.begin(), elements.end(), std::greater<int>());
+		//erase in the vector where remove_if indicates
+		data.erase(
+			std::remove_if(data.begin(), data.end(), [&](const T& d) {
+			//Get the index of the current iterations in data
+			int index = &d - &*data.begin();
+			//Flag remove as false if no more elements to remove, else flag as true if index matches last element in elements
+			bool remove = elements.empty() ? false : (index == elements.back());
+			// remove the last element if we found it. 
+			if (remove) {
+				elements.pop_back();
+			}
+			return remove; })
+
+			, data.end());
 	}
 
 	//Destructor
@@ -125,18 +145,25 @@ public:
 		viewer.show();
 	}
 
-	T & at(unsigned int i) {
+	inline T & at(unsigned int i) {
 		return data.at(i);
 	}
 
-	const T & at(unsigned int i) const {
+	inline const T & at(unsigned int i) const {
 		return data.at(i);
 	}
 
 	void transpose() {
-		std::vector<T> ping = std::vector<T>(data.size(), 0);
-		recursiveTranspose(data.data(), ping.data(), width, height, width, height);
+		if (ping.size() != data.size())
+			ping = std::vector<T>(data.size(), 0);
+
+		PerfUtility perf{};
+
+		perf.measureFunction([&] {
+			recursiveTranspose(data.data(), ping.data(), width, height, width, height);
+		}, "Transpose");
 		std::swap(data, ping);
+		setSize(getHeight(), getWidth());
 	}
 
 	void setName(const std::string& aName) { name = aName; };
@@ -160,11 +187,13 @@ private:
 		}
 	}
 
+
+	const static int TRANSPOSE_BLOCK_SIZE = 8;
 	void baseTranspose(T* __restrict a, T * __restrict b, const int width, const int height, const int strideA, const int strideB)
 	{
-		//__assume(height <= TRANSPOSE_BLOCK_SIZE);
+		__assume(height <= TRANSPOSE_BLOCK_SIZE);
 		for (int j = 0; j < height; ++j) {
-			//__assume(width <= TRANSPOSE_BLOCK_SIZE);
+			__assume(width <= TRANSPOSE_BLOCK_SIZE);
 			for (int i = 0; i < width; ++i) {
 				int index = i + j * strideA;
 				int indexT = j + i * strideB;
@@ -172,7 +201,6 @@ private:
 			}
 		}
 	}
-	const static int TRANSPOSE_BLOCK_SIZE = 8;
 	void recursiveTranspose(T * __restrict a, T * __restrict b, int widthA, int heightA, int strideA, int strideB)
 	{
 		// Base case 
@@ -184,26 +212,32 @@ private:
 		// Recursive case
 		{
 			if (heightA > widthA) { //Split along height in A
+
+				unsigned int split = (double)widthA / 2.0;
+
 				T* aTop = a;
-				T* aBot = a + heightA * strideA / 2;
+				T* aBot = a + split * strideA;
 
 				//splitting along height in A means splitting along width in B
 				T* bLeft = b;
-				T* bRight = b + heightA / 2;
+				T* bRight = b + split;
 
-				recursiveTranspose(aTop, bLeft, widthA, heightA / 2, strideA, strideB);
-				recursiveTranspose(aBot, bRight, widthA, heightA / 2, strideA, strideB);
+				recursiveTranspose(aTop, bLeft, widthA, split, strideA, strideB);
+				recursiveTranspose(aBot, bRight, widthA, heightA - split, strideA, strideB);
 			}
 			else { //Split along width in A
+
+				unsigned int split = (double)widthA / 2.0;
+
 				T* aLeft = a;
-				T* aRight = a + widthA / 2;
+				T* aRight = a + split;
 
 				//splitting along width in A means splitting along height in B
 				T* bTop = b;
-				T* bBot = b + widthA * strideB / 2;
+				T* bBot = b + split * strideB;
 
-				recursiveTranspose(aLeft, bTop, widthA / 2, heightA, strideA, strideB);
-				recursiveTranspose(aRight, bBot, widthA / 2, heightA, strideA, strideB);
+				recursiveTranspose(aLeft, bTop, split, heightA, strideA, strideB);
+				recursiveTranspose(aRight, bBot, widthA - split, heightA, strideA, strideB);
 			}
 		}
 	}
@@ -211,9 +245,11 @@ private:
 	//Data members
 
 	std::vector<T> data = std::vector<T>(); //The image data itself.
+	std::vector<T> ping;
 	unsigned int width = 0;
 	unsigned int height = 0;
 	std::string name = "";
+
 
 };
 

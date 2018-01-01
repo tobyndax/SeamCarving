@@ -25,18 +25,23 @@ void SeamCostCalculator::execute()
 
 void SeamCostCalculator::calculateCost()
 {
-	std::array<int, 3> candidates{ { 0,0,0 } };
+	
 	//Initialize the cost map
 	for (unsigned int i = 1; i < image->getWidth() - 1; i++) { //Ignore edges since filter does not calculate values there.
 		unsigned int index = image->getWidth() + i; //Start at second row. 
 		cost->at(index) = image->at(index);
 	}
+	std::array<int, 3> candidates{ {0,0,0 } };
+	std::vector<int> localCost = std::vector<int>(image->getWidth(), 0);
+	std::vector<int> localPath = std::vector<int>(image->getWidth(), 0);
 
 	//Start at row 2 instead of one due to how the sobel filter is implemented around the edges.
 	for (unsigned int j = 2; j < image->getHeight() - 1; j++) {
-		for (unsigned int i = 1; i < image->getWidth() - 1; i++) { //Ignore edges since filter does not calculate values there.
+		unsigned int dstIndex = j * image->getWidth();
 
-			unsigned int srcIndex = (j-1) * image->getWidth() + i;
+		std::vector<int> filterCosts = std::vector<int>(image->begin() + j * image->getWidth(), image->begin() + (j + 1) * image->getWidth());
+		for (unsigned int i = 1; i < image->getWidth() - 1; i++) { //Ignore edges since filter does not calculate values there.
+			unsigned int srcIndex = (j - 1) * image->getWidth() + i;
 
 			//special case 1 
 			if (i == 1) {
@@ -58,15 +63,14 @@ void SeamCostCalculator::calculateCost()
 				candidates[2] = cost->at(srcIndex + 1);
 			}
 
-			unsigned int dstIndex = j * image->getWidth() + i;
-
 			auto it = std::min_element(candidates.begin(), candidates.end()); //Get iterator to minimum element.
 			int pos = it - candidates.begin(); //Get position of iterator.
 
-			cost->at(dstIndex) = (*it + image->at(dstIndex)); //cumulative cost 
-			path->at(dstIndex) = pos - 1; //offset by one so that the value can be used directly as index offset. 
-		
+			localCost[i] = (*it + filterCosts[i]); //cumulative cost 
+			localPath[i] = pos - 1; //offset by one so that the value can be used directly as index offset. 
 		}
+		std::copy(localCost.begin(), localCost.end(), cost->begin() + dstIndex);
+		std::copy(localPath.begin(), localPath.end(), path->begin() + dstIndex);
 	}
 }
 

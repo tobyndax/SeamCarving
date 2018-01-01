@@ -5,8 +5,9 @@
 #ifdef __APPLE__
 std::string pngPath = "../testdata/lenaGrayLarge.png";
 #else
-std::string pngPath = "..\\..\\testdata\\lenaGray.png";
+std::string pngPath = "..\\..\\testdata\\Broadway_tower_grayscale.png";
 #endif
+
 
 int main(int argc, char * argv[])
 {
@@ -19,16 +20,13 @@ int main(int argc, char * argv[])
 			img2->show();
 		}
 		SeamCarver seamCarver(img);
-		//seamCarver.removeColumnsDebug(1);
-		seamCarver.removeColumns(img->getWidth()/4);
-		//seamCarver.removeColumnsDebug(1);
-		seamCarver.ShowResult();
+		seamCarver.removeColumns(img->getWidth() / 2, true);
 
+		seamCarver.getResult()->showNow();
 
-		{
-			//Sanity check that img is untouched 
-			img->show();
-		}
+		//Sanity check that we haven't touched the original data
+		img->show();
+
 	}
 	return 0;
 }

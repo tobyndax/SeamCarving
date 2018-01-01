@@ -9,7 +9,7 @@ public:
 	//We should be fine with the default destructor.
 
 	//perform seam removal its number of times
-	void removeColumns(unsigned int its);
+	void removeColumns(unsigned int its, bool liveUpdate = false );
 	void removeColumnsDebug(unsigned int its);
 
 	std::shared_ptr<Image<unsigned char>> getResult();
