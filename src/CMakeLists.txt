@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.0) #TODO Figure out what the minimum required version actually is.
-project(GPUImageProcessing)
+project(SeamCarving)
 
 IF(MSVC) #If windows (better to check MSVC for the MSVC flags)
   message(STATUS "Setting MSVC flags")
@@ -17,16 +17,17 @@ if (OPENMP_FOUND)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-#Set c++11 as standard
-set(CMAKE_CXX_STANDARD 11)
-IF(MSVC AND ${CMAKE_CONFIGURATION_TYPES} STREQUAL "Release")
+#Set c++17 as standard
+set(CMAKE_CXX_STANDARD 17)
+IF(MSVC AND (${CMAKE_CONFIGURATION_TYPES} STREQUAL "Release" OR ${CMAKE_CONFIGURATION_TYPES} STREQUAL "RelWithDebInfo"))
    message(STATUS ${CMAKE_CONFIGURATION_TYPES} " Enabling optimization")
 	
    ADD_DEFINITIONS(/arch:AVX2)
    ADD_DEFINITIONS(/fp:fast)
    ADD_DEFINITIONS(/O2)
    ADD_DEFINITIONS(/FA)
-ENDIF(MSVC AND ${CMAKE_CONFIGURATION_TYPES} STREQUAL "Release")
+   ADD_DEFINITIONS(/std:c++17)
+ENDIF(MSVC AND  (${CMAKE_CONFIGURATION_TYPES} STREQUAL "Release" OR ${CMAKE_CONFIGURATION_TYPES} STREQUAL "RelWithDebInfo"))
 #Useful output directories.
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../lib/")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../lib/")

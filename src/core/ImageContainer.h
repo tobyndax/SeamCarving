@@ -6,26 +6,32 @@
 #include <PNGViewer.h>
 #include <lodepng.h>
 #include <iostream>
-
+#include <algorithm>
+#include <functional>
+#include <PerfUtility.h>
 
 template<typename T>
 class EXPORT_SYMBOL Image {
+
 public:
-	////Constructor from dataptr
-	//Image(unsigned char * aData, unsigned int aWidth, unsigned int aHeight) : width(aWidth), height(aHeight), data{std::make_shared<std::vector<unsigned char>>(aData,aWidth*aHeight) } {
-	//	
-	//}
+
+	//Default Image Constructor
+	Image<T>() {
+		width = 0;
+		height = 0;
+		data = std::vector<T>();
+	}
 
 	//Empty Image Constructor
-	Image<T>(unsigned int aWidth, unsigned aHeight) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
+	Image<T>(unsigned int aWidth, unsigned aHeight) {
 		width = aWidth;
 		height = aHeight;
 		data = std::vector<T>(width*height, 0);
 	}
 
 	//Constructor from file
-	Image<T>(std::string filePath) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
-		
+	Image<T>(std::string filePath) {
+
 		unsigned char * dataPtr;
 
 		/*load the PNG in one function call*/
@@ -35,38 +41,67 @@ public:
 		{
 			printf("decoder error %u: %s\n", error, lodepng_error_text(error));
 		}
-		unsigned char * newData = new unsigned char[width*height];
+		data = std::vector<T>(width*height);
 		for (int i = 0; i < width*height; ++i) {
-			newData[i] = dataPtr[i * 4 + 0];
+			data[i] = dataPtr[i * 4 + 0];
 		}
-
-		data = std::vector<T>(newData, newData + width * height);
+		delete dataPtr;
 	}
 
 	//Copy constructor
-	Image<T>(const Image & other) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
+	Image<T>(const Image & other) {
 		this->width = other.width;
 		this->height = other.height;
+		this->name = other.name;
 		data = other.data;
 	}
 
 	//Move constructor
-	Image<T>(Image && other) : viewer(std::unique_ptr<PNGViewer>(new PNGViewer())) {
+	Image<T>(Image && other) {
 		this->width = other.width;
 		this->height = other.height;
+		this->name = other.name;
 		data = other.data;
 	}
 	//Copy assignment operator
 	Image& operator= (const Image& other) {
 		Image tmp(other);
 		*this = std::move(tmp);
-		return *this; 
+		return *this;
+	}
+
+	void removePixel(unsigned int i) {
+		data.erase(data.begin() + i);
+	}
+	void removePixels(std::vector<int> elements) {
+		//Sort the elements so that the smallest index is at the back of the vector 
+		std::sort(elements.begin(), elements.end(), std::greater<int>());
+		//erase in the vector where remove_if indicates
+		data.erase(
+			std::remove_if(data.begin(), data.end(), [&](const T& d) {
+			//Get the index of the current iterations in data
+			int index = &d - &*data.begin();
+			//Flag remove as false if no more elements to remove, else flag as true if index matches last element in elements
+			bool remove = elements.empty() ? false : (index == elements.back());
+			// remove the last element if we found it. 
+			if (remove) {
+				elements.pop_back();
+			}
+			return remove; })
+
+			, data.end());
 	}
 
 	//Destructor
 	~Image() {
-		std::cout << "Image destructor running" << std::endl;
+#if _DEBUG
+		std::cout << "Image destructor running: " << name << std::endl;
+#endif
+	}
 
+	//Clone
+	Image clone() {
+		return Image(*this);
 	}
 
 	//Dimensions accessor
@@ -86,46 +121,79 @@ public:
 		return data.end();
 	}
 
+	void resize(unsigned int aWidth, unsigned int aHeight) {
+		width = aWidth;
+		height = aHeight;
+		data.resize(aWidth*aHeight);
+	}
+
+	void setSize(unsigned int aWidth, unsigned int aHeight) {
+		width = aWidth;
+		height = aHeight;
+	}
+
 	//Open a window and show the result. Wait for keypress until returning.
-	void show() {
-		std::vector<unsigned char> d = getCharData();
-		viewer->setData(d.data(), width, height);
-		viewer->showWaitForEsc();
-		
+	void show(bool dynamicScale = false) {
+		std::vector<unsigned char> d = getCharData(dynamicScale);
+		viewer.setData(d.data(), width, height);
+		viewer.showWaitForEsc();
+	}
+	//Open a window and show the result. Wait for keypress until returning.
+	void showNow(bool dynamicScale = false) {
+		std::vector<unsigned char> d = getCharData(dynamicScale);
+		viewer.setData(d.data(), width, height);
+		viewer.show();
 	}
 
-	T & at(unsigned int i) {
+	inline T & at(unsigned int i) {
 		return data.at(i);
 	}
 
-	const T & at(unsigned int i) const {
+	inline const T & at(unsigned int i) const {
 		return data.at(i);
-	}
-
-	std::vector<T> & getData() {
-		return data;
 	}
 
 	void transpose() {
-		std::vector<T> ping = std::vector<T>(data.size(),0);
-		recursiveTranspose(data.data(), ping.data(), width, height, width, height);
+		if (ping.size() != data.size())
+			ping = std::vector<T>(data.size(), 0);
+
+		PerfUtility perf{};
+
+		perf.measureFunction([&] {
+			recursiveTranspose(data.data(), ping.data(), width, height, width, height);
+		}, "Transpose");
 		std::swap(data, ping);
+		setSize(getHeight(), getWidth());
 	}
+
+	void setName(const std::string& aName) { name = aName; };
 
 private:
-	std::vector<unsigned char> getCharData() {
-		return std::vector<unsigned char>(data.begin(), data.end());
+	PNGViewer viewer{};
+
+	std::vector<unsigned char> getCharData(const bool dynamicScale) {
+		if (dynamicScale) {
+			auto it = std::max_element(data.begin(), data.end());
+			T val = *it / 254; //When max value is 255 we get some pixels completely black, not sure why, leave for future investigation.
+
+			std::vector<unsigned char> res;
+			std::transform(data.begin(), data.end(), std::back_inserter(res), [&val](T a) {return (unsigned char)(a / val); });
+
+			return res;
+		}
+		else {
+
+			return std::vector<unsigned char>(data.begin(), data.end());
+		}
 	}
 
-	std::vector<T> data = std::vector<T>(); //The image data itself.
-	unsigned int width = 0;
-	unsigned int height = 0;
 
-	std::unique_ptr<PNGViewer> viewer;
-
+	const static int TRANSPOSE_BLOCK_SIZE = 8;
 	void baseTranspose(T* __restrict a, T * __restrict b, const int width, const int height, const int strideA, const int strideB)
 	{
+		__assume(height <= TRANSPOSE_BLOCK_SIZE);
 		for (int j = 0; j < height; ++j) {
+			__assume(width <= TRANSPOSE_BLOCK_SIZE);
 			for (int i = 0; i < width; ++i) {
 				int index = i + j * strideA;
 				int indexT = j + i * strideB;
@@ -133,7 +201,6 @@ private:
 			}
 		}
 	}
-	const static int TRANSPOSE_BLOCK_SIZE = 8;
 	void recursiveTranspose(T * __restrict a, T * __restrict b, int widthA, int heightA, int strideA, int strideB)
 	{
 		// Base case 
@@ -145,29 +212,45 @@ private:
 		// Recursive case
 		{
 			if (heightA > widthA) { //Split along height in A
+
+				unsigned int split = (double)widthA / 2.0;
+
 				T* aTop = a;
-				T* aBot = a + heightA * strideA / 2;
+				T* aBot = a + split * strideA;
 
 				//splitting along height in A means splitting along width in B
 				T* bLeft = b;
-				T* bRight = b + heightA / 2;
+				T* bRight = b + split;
 
-				recursiveTranspose(aTop, bLeft, widthA, heightA / 2, strideA, strideB);
-				recursiveTranspose(aBot, bRight, widthA, heightA / 2, strideA, strideB);
+				recursiveTranspose(aTop, bLeft, widthA, split, strideA, strideB);
+				recursiveTranspose(aBot, bRight, widthA, heightA - split, strideA, strideB);
 			}
 			else { //Split along width in A
+
+				unsigned int split = (double)widthA / 2.0;
+
 				T* aLeft = a;
-				T* aRight = a + widthA / 2;
+				T* aRight = a + split;
 
 				//splitting along width in A means splitting along height in B
 				T* bTop = b;
-				T* bBot = b + widthA * strideB / 2;
+				T* bBot = b + split * strideB;
 
-				recursiveTranspose(aLeft, bTop, widthA / 2, heightA, strideA, strideB);
-				recursiveTranspose(aRight, bBot, widthA / 2, heightA, strideA, strideB);
+				recursiveTranspose(aLeft, bTop, split, heightA, strideA, strideB);
+				recursiveTranspose(aRight, bBot, widthA - split, heightA, strideA, strideB);
 			}
 		}
 	}
+
+	//Data members
+
+	std::vector<T> data = std::vector<T>(); //The image data itself.
+	std::vector<T> ping;
+	unsigned int width = 0;
+	unsigned int height = 0;
+	std::string name = "";
+
+
 };
 
 template class Image<int>;

@@ -1,26 +1,28 @@
 #include "SobelMagnitude.h"
 #include <algorithm>
 #include <iostream>
+#include <PerfUtility.h>
 
-SobelMagnitudeFilter::SobelMagnitudeFilter(const Image<unsigned char> & im)
+SobelMagnitudeFilter::SobelMagnitudeFilter(std::shared_ptr<Image<unsigned char>> im)
 {
-	image = std::make_shared<const Image<unsigned char>>(im);
-	gx = std::move(std::make_unique<Image<int>>(Image<int>(image->getWidth(), image->getHeight())));
-	gy = std::move(std::make_unique<Image<int>>(Image<int>(image->getWidth(), image->getHeight())));
-	ping = std::move(std::make_unique<Image<int>>(Image<int>(image->getWidth(), image->getHeight())));
-	output = std::make_shared<Image<unsigned char>>(Image<unsigned char>(image->getWidth(), image->getHeight()));
+	image = im;
+	
+	output->resize(image->getWidth(), image->getHeight());
+	output->setName("output");
 }
+
 
 SobelMagnitudeFilter::~SobelMagnitudeFilter()
 {
+#if _DEBUG
 	std::cout << "Filter destructor running" << std::endl;
+#endif // DEBUG
+
 }
 
 void SobelMagnitudeFilter::execute()
 {
-	performGx();
-	performGy();
-	combineGxGy();
+	calculateMagnitude();
 }
 
 std::shared_ptr<Image<unsigned char>> SobelMagnitudeFilter::getResult() const
@@ -28,104 +30,38 @@ std::shared_ptr<Image<unsigned char>> SobelMagnitudeFilter::getResult() const
 	return output;
 }
 
-void SobelMagnitudeFilter::performGx()
+void SobelMagnitudeFilter::calculateMagnitude()
 {
-	//No handling of edges yet.
-	//for (unsigned int j = 1; j < gx->getHeight() - 1; j++)
-	//{
-	//	for (unsigned int i = 1; i < gx->getWidth() - 1; i++)
-	//	{
-	//		//first row of filter
-	//		unsigned int index = (j - 1) * gx->getWidth() + i;
-	//		int sum = (int)image->at(index - 1) - (int)image->at(index + 1);
-
-	//		index = j * gx->getWidth() + i;
-	//		sum += 2 * (int)image->at(index - 1) - (int)2 * image->at(index + 1);
-
-	//		index = (j + 1) * gx->getWidth() + i;
-	//		sum += (int)image->at(index - 1) - (int)image->at(index + 1);
-
-	//		gx->at(j*gx->getWidth() + i) = sum;
-	//	}
-	//}
-
-	//No handling of edges yet.
-	for (unsigned int j = 0; j < gx->getHeight() - 0; j++)
+	for (unsigned int j = 1; j < image->getHeight() - 1; j++)
 	{
-		for (unsigned int i = 1; i < gx->getWidth() - 1; i++)
+		for (unsigned int i = 1; i < image->getWidth() - 1; i++)
 		{
-			unsigned int index = i + j * image->getWidth();
-			ping->at(index) = (int)image->at(index - 1) - (int)image->at(index + 1);
-		}
-	}
-	
-	ping->transpose();
+			//Calculate gx
+			unsigned int index = (j - 1) * image->getWidth() + i;
+			int sum = (int)image->at(index - 1) - (int)image->at(index + 1);
 
-	for (unsigned int j = 0; j < gx->getHeight() - 0; j++)
-	{
-		for (unsigned int i = 1; i < gx->getWidth() - 1; i++)
-		{
-			unsigned int index = i + j * gx->getWidth();
-			gx->at(index) = ping->at(index - 1) + 2 * ping->at(index) + ping->at(index + 1);
+			index = j * image->getWidth() + i;
+			sum += 2 * (int)image->at(index - 1) - (int)2 * image->at(index + 1);
+
+			index = (j + 1) * image->getWidth() + i;
+			sum += (int)image->at(index - 1) - (int)image->at(index + 1);
+
+			int gxS = sum;
+
+			//Calculate gy
+			index = (j - 1) * image->getWidth() + i;
+			sum = (int)image->at(index - 1) + 2 * (int)image->at(index) + (int)image->at(index + 1);
+
+			index = (j + 1) * image->getWidth() + i;
+			sum -= (int)image->at(index - 1) + 2 * (int)image->at(index) + (int)image->at(index + 1);
+
+			int gyS = sum;
+			//Combine gx and gy
+			output->at(j*image->getWidth() + i) = sqrt(pow(gyS, 2) + pow(gxS, 2));
 
 		}
 	}
 
-}
-
-void SobelMagnitudeFilter::performGy()
-{
-	//No handling of edges yet.
-	//for (unsigned int j = 1; j < gy->getHeight() - 1; j++)
-	//{
-	//	for (unsigned int i = 1; i < gy->getWidth() - 1; i++)
-	//	{
-	//		//first row of filter
-	//		unsigned int index = (j - 1) * gy->getWidth() + i;
-	//		int sum = (int)image->at(index - 1) + 2 * (int)image->at(index) + (int)image->at(index + 1);
-
-	//		index = (j + 1) * gy->getWidth() + i;
-	//		sum -= (int)image->at(index - 1) + 2 * (int)image->at(index) + (int)image->at(index + 1);
-
-	//		gy->at(j*gy->getWidth() + i) = sum;
-	//	}
-	//}
-
-	
-
-	for (unsigned int j = 1; j < gy->getHeight() - 1; j++)
-	{
-		for (unsigned int i = 1; i < gy->getWidth() - 1; i++)
-		{
-			//first row of filter
-			unsigned int index = j * gy->getWidth() + i;
-			ping->at(index) = (int)image->at(index - 1) + 2 * (int)image->at(index) + (int)image->at(index + 1);
-		}
-	}
-
-	ping->transpose();
-
-	for (unsigned int j = 1; j < gy->getHeight() - 1; j++)
-	{
-		for (unsigned int i = 1; i < gy->getWidth() - 1; i++)
-		{
-			//first row of filter
-			unsigned int index = i + j * gy->getWidth();
-			gy->at(index) = (int)ping->at(index - 1) - (int)ping->at(index + 1);
-
-		}
-	}
-
-	
-	
-
-}
-
-void SobelMagnitudeFilter::combineGxGy()
-{
-	//std::transform(gy->begin(), gy->end(), gx->begin(), output->begin(), [](int a, int b) {int res = sqrt(a*a + b * b); return res < 0 ? 0 : (unsigned char)res; });
-	std::transform(gy->begin(), gy->end(), gx->begin(), output->begin(), [](int a, int b) {int res = std::sqrt(b*b); return res < 0 ? 0 : (unsigned char)res; });
-	output->transpose();
 }
 
 

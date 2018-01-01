@@ -36,6 +36,7 @@ The code is modified in multiple locations! Compare to https://raw.githubusercon
 #include <lodepng.h>
 #include <SDL.h>
 #include <PNGViewer.h>
+#include <iostream>
 
 
 PNGViewer::PNGViewer() {
@@ -133,11 +134,11 @@ void PNGViewer::generateTexture() {
 			b = image[4 * y * w + 4 * x + 2]; /*blue*/
 			a = image[4 * y * w + 4 * x + 3]; /*alpha*/
 
-											  /*make translucency visible by placing checkerboard pattern behind image*/
-			checkerColor = 191 + 64 * (((x / 16) % 2) == ((y / 16) % 2));
-			r = (a * r + (255 - a) * checkerColor) / 255;
-			g = (a * g + (255 - a) * checkerColor) / 255;
-			b = (a * b + (255 - a) * checkerColor) / 255;
+			//								  /*make translucency visible by placing checkerboard pattern behind image*/
+			//checkerColor = 191 + 64 * (((x / 16) % 2) == ((y / 16) % 2));
+			//r = (a * r + (255 - a) * checkerColor) / 255;
+			//g = (a * g + (255 - a) * checkerColor) / 255;
+			//b = (a * b + (255 - a) * checkerColor) / 255;
 
 			/*give the color value to the pixel of the screenbuffer*/
 			bufp = (Uint32 *)png_surface->pixels + (y * png_surface->pitch / 4) / jump + (x / jump);
@@ -180,6 +181,29 @@ void PNGViewer::show() {
 	if (!image) {
 		printf("Error, must initialize image before showing");
 	}
+
+	int cw, ch;
+	if (!window) createWindow();  //If there is no window, create it.
+	SDL_GetWindowSize(window, &cw, &ch);
+	if (cw != w / jump || ch != h / jump) SDL_SetWindowSize(window, w / jump, h / jump); //If image size changed, change window size
+	cw = 512; ch = 512;
+	generateTexture();
+
+	//std::cout << "Height: " << ch << "   Width: " << cw << std::endl; image->show();
+
+	if (logo_dst == nullptr) {
+		logo_dst = new SDL_Rect();
+	}
+
+	// Render the entire image to the center of the screen:
+	logo_dst->x = (w / 2) - (w / 2);
+	logo_dst->y = (h / 2) - (h / 2);
+	logo_dst->w = w;
+	logo_dst->h = h;
+	SDL_RenderCopy(renderer, png_texture, NULL, logo_dst);
+
+	SDL_RenderPresent(renderer);
+
 }
 
 void PNGViewer::showWaitForEsc() {
@@ -190,7 +214,10 @@ void PNGViewer::showWaitForEsc() {
 	if (!window) createWindow();  //If there is no window, create it.
 	SDL_GetWindowSize(window, &cw, &ch);
 	if (cw != w / jump || ch != h / jump) SDL_SetWindowSize(window, w / jump, h / jump); //If image size changed, change window size
+	cw = 512; ch = 512;
 	generateTexture();
+
+	//std::cout << "Height: " << ch << "   Width: " << cw << std::endl; image->show();
 
 	if (logo_dst == nullptr) {
 		logo_dst = new SDL_Rect();
@@ -214,7 +241,7 @@ void PNGViewer::showWaitForEsc() {
 		logo_dst->x = (w / 2) - (w / 2);
 		logo_dst->y = (h / 2) - (h / 2);
 		logo_dst->w = w;
-		logo_dst->h = w;
+		logo_dst->h = h;
 		SDL_RenderCopy(renderer, png_texture, NULL, logo_dst);
 
 		SDL_RenderPresent(renderer);
