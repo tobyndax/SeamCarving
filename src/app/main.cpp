@@ -11,7 +11,6 @@ std::string pngPath = "..\\..\\testdata\\Broadway_tower_grayscale.png";
 
 int main(int argc, char * argv[])
 {
-
 	{
 		std::shared_ptr<Image<unsigned char>> img = std::make_shared<Image<unsigned char>>(pngPath);
 		img->setName("img");
@@ -20,9 +19,9 @@ int main(int argc, char * argv[])
 			img2->show();
 		}
 		SeamCarver seamCarver(img);
-		seamCarver.removeColumns(img->getWidth() / 2, true);
+		seamCarver.removeColumns(img->getWidth()/2,10);
+		//seamCarver.removeColumns(1, true);
 
-		seamCarver.getResult()->showNow();
 
 		//Sanity check that we haven't touched the original data
 		img->show();

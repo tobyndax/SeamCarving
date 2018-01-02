@@ -10,10 +10,28 @@
 #include <functional>
 #include <PerfUtility.h>
 
+
+
+EXPORT_SYMBOL struct Pixel {
+	//Assumption concerning maximum image width. Not sure about this one yet.
+	const static unsigned int largeValue{ 1048576 };
+	unsigned int x;
+	unsigned int y;
+	Pixel(unsigned int aX, unsigned int aY) : x(aX), y(aY) {
+
+	}
+	
+	bool operator<(const Pixel& other) const {
+		return((this->y * largeValue + this->x) < (other.y * largeValue + other.x));
+	}
+};
+
 template<typename T>
 class EXPORT_SYMBOL Image {
 
 public:
+	
+
 
 	//Default Image Constructor
 	Image<T>() {

@@ -2,7 +2,7 @@
 
 #include <ImageContainer.h>
 #include <memory>
-
+#include <set>
 
 class SobelMagnitudeFilter {
 public:
@@ -10,6 +10,9 @@ public:
 	~SobelMagnitudeFilter(); 
 	void execute();
 	std::shared_ptr<Image<unsigned char>> getResult() const;
+	void setInput(std::shared_ptr<const Image<unsigned char>> aImage) { image = aImage; output->resize(image->getWidth(), image->getHeight());}
+
+	void update(std::set<Pixel> pixels);
 
 private: 
 	
