@@ -11,14 +11,10 @@ SeamCostCalculator::SeamCostCalculator(std::shared_ptr<Image<unsigned char>> im)
 void SeamCostCalculator::execute()
 {
 	PerfUtility perf{};
-	perf.measureFunction([&] {
-		filter->setInput(image);
-		filter->execute();
-		filterImage = filter->getResult();
-	}, "Sobel Filter execution");
-	perf.measureFunction([&] {
-		calculateCost();
-	}, "Cost Calculation");
+	filter->setInput(image);
+	filter->execute();
+	filterImage = filter->getResult();
+	calculateCost();
 }
 
 void SeamCostCalculator::setInput(std::shared_ptr<Image<unsigned char>> im)
@@ -49,7 +45,7 @@ std::set<Pixel> SeamCostCalculator::calculateUpdateNeed(std::vector<Pixel> pixel
 		set.insert(localPixel);
 		localPixel.x--;
 		set.insert(localPixel);
-		
+
 		localPixel = pixel;
 		pixel.y++;
 		set.insert(localPixel);
@@ -61,6 +57,7 @@ std::set<Pixel> SeamCostCalculator::calculateUpdateNeed(std::vector<Pixel> pixel
 
 void SeamCostCalculator::update(std::set<Pixel> pixels) {
 	filter->setInput(image);
+	PerfUtility perf{};
 	filter->update(pixels);
 	filterImage = filter->getResult();
 	calculateCost();
@@ -71,7 +68,7 @@ void SeamCostCalculator::removePixelsAndUpdate(std::vector<int> indices, std::ve
 	if (indices.empty()) return;
 
 	filterImage->removePixels(indices);
-	filterImage->setSize(filterImage->getWidth()-1, filterImage->getHeight());
+	filterImage->setSize(filterImage->getWidth() - 1, filterImage->getHeight());
 
 	//cost->removePixels(indices);
 	cost->setSize(filterImage->getWidth(), filterImage->getHeight());
