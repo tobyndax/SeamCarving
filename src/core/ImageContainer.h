@@ -9,20 +9,29 @@
 #include <algorithm>
 #include <functional>
 #include <PerfUtility.h>
-
-
+#include <cstdint>
 
 EXPORT_SYMBOL struct Pixel {
+public:
 	//Assumption concerning maximum image width. Not sure about this one yet.
-	const static unsigned int largeValue{ 1048576 };
-	unsigned int x;
-	unsigned int y;
-	Pixel(unsigned int aX, unsigned int aY) : x(aX), y(aY) {
-
+	const static uint64_t hashOffset{ 1 << 32 }; //set to 2^32
+	const static uint32_t upperLimit{ 1 << 31 }; // set to 2^31
+	Pixel(uint32_t aX, uint32_t aY){
+		if (aX > upperLimit)
+			throw std::invalid_argument("x is larger than 2^31 which is not allowed for Pixel");
+		else if (aY > upperLimit)
+			throw std::invalid_argument("y is larger than 2^31 which is not allowed for Pixel");
+		
+		x = aX; y = aY;
 	}
+
+	uint32_t x; // 0 - 2^31 valid pixel positions
+	uint32_t y; // 0 - 2^31 valid pixel positions
 	
+	// Idea here is that y maps uniquely between 2^32 -> 2^63 and x lineraly add into the power using the fact that there are 2^32 numbers between (y+1)*2^(32) - y*2^32 
+	// So for every y we have 2^32 unique values, which we fit our x values into. 
 	bool operator<(const Pixel& other) const {
-		return((this->y * largeValue + this->x) < (other.y * largeValue + other.x));
+		return(((uint64_t)this->y * hashOffset + ((uint64_t)this->x) < ((uint64_t)other.y * hashOffset + (uint64_t)other.x)));
 	}
 };
 
@@ -30,7 +39,7 @@ template<typename T>
 class EXPORT_SYMBOL Image {
 
 public:
-	
+
 
 
 	//Default Image Constructor
